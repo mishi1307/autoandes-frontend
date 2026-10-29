@@ -1,6 +1,84 @@
-<div class="page-head"><div><span class="eyebrow">CATÁLOGO</span><h1>Servicios</h1><p class="muted">Administra los servicios del taller.</p></div>@if(auth.hasPermission('SERVICIO_ESCRIBIR')){<button class="button button-primary" (click)="nuevo()">＋ Nuevo servicio</button>}</div>
-@if(error){<div class="alert">{{error}}</div>}@if(success){<div class="alert success">{{success}}</div>}
-<section class="panel"><div class="panel-head"><div><b>Listado</b><small class="muted" style="display:block;margin-top:5px">Servicios registrados en AutoAndes</small></div><input placeholder="Buscar por código o nombre" [(ngModel)]="search" [ngModelOptions]="{standalone:true}"></div>
-<div class="panel-body" *ngIf="showForm"><form class="inline-form" [formGroup]="form" (ngSubmit)="guardar()"><h3>{{editing?'Editar servicio':'Nuevo servicio'}}</h3><div class="grid"><label class="field"><span>Código</span><input formControlName="codigo" placeholder="SRV-009"><small class="error" *ngIf="form.controls.codigo.touched&&form.controls.codigo.invalid">Usa el formato SRV-000.</small></label><label class="field"><span>Nombre</span><input formControlName="nombre"><small class="error" *ngIf="form.controls.nombre.touched&&form.controls.nombre.invalid">Nombre requerido, de 3 a 80 caracteres.</small></label><label class="field"><span>Precio</span><input type="number" min="0.01" step="0.01" formControlName="precio"></label><label class="field"><span>Duración (minutos)</span><input type="number" min="15" max="480" formControlName="duracionMin"></label></div><div class="form-actions"><button type="button" class="button button-quiet" (click)="cancelar()">Cancelar</button><button class="button button-primary">Guardar</button></div></form></div>
-@if(loading){<div class="empty">Cargando servicios…</div>}@else if(filtered.length===0){<div class="empty">No hay servicios para mostrar.</div>}@else{<div class="table-wrap"><table><thead><tr><th>Código</th><th>Servicio</th><th>Precio</th><th>Duración</th><th>Estado</th><th *ngIf="auth.hasPermission('SERVICIO_ESCRIBIR')">Acciones</th></tr></thead><tbody>@for(s of filtered;track s.id){<tr><td><b>{{s.codigo}}</b></td><td>{{s.nombre}}</td><td>S/ {{s.precio|number:'1.2-2'}}</td><td>{{s.duracionMin}} min</td><td><span class="badge" [class.off]="!s.activo">{{s.activo?'Activo':'Inactivo'}}</span></td><td *ngIf="auth.hasPermission('SERVICIO_ESCRIBIR')"><div class="actions"><button class="button button-quiet" (click)="editar(s)">Editar</button><button class="button button-danger" (click)="cambiar(s)">{{s.activo?'Dar de baja':'Activar'}}</button></div></td></tr>}</tbody></table></div>}
-</section>
+@if (formRoute) {
+  <div class="page-head">
+    <div>
+      <span class="eyebrow">CATÁLOGO</span>
+      <h1>{{ editingRoute ? 'Editar servicio' : 'Nuevo servicio' }}</h1>
+      <p class="muted">{{ editingRoute ? 'Actualiza los datos del servicio seleccionado.' : 'Registra un servicio en el catálogo del taller.' }}</p>
+    </div>
+  </div>
+
+  @if (error) { <div class="alert">{{ error }}</div> }
+  @if (loading) { <div class="panel empty">Cargando servicio…</div> }
+  @else if (!editingRoute || editing) {
+    <section class="panel panel-body">
+      <form class="inline-form" [formGroup]="form" (ngSubmit)="guardar()">
+        <div class="grid">
+          <label class="field">
+            <span>Código</span>
+            <input formControlName="codigo" placeholder="SRV-009" (input)="clearFieldError('codigo')">
+            @if (form.controls.codigo.touched && form.controls.codigo.invalid) {
+              <small class="error">Usa el formato SRV-000.</small>
+            }
+            @if (fieldErrors['codigo']) { <small class="error">{{ fieldErrors['codigo'] }}</small> }
+          </label>
+          <label class="field">
+            <span>Nombre</span>
+            <input formControlName="nombre" (input)="clearFieldError('nombre')">
+            @if (form.controls.nombre.touched && form.controls.nombre.invalid) {
+              <small class="error">Nombre requerido, de 3 a 80 caracteres.</small>
+            }
+            @if (fieldErrors['nombre']) { <small class="error">{{ fieldErrors['nombre'] }}</small> }
+          </label>
+          <label class="field"><span>Precio</span><input type="number" min="0.01" step="0.01" formControlName="precio" (input)="clearFieldError('precio')">@if (fieldErrors['precio']) { <small class="error">{{ fieldErrors['precio'] }}</small> }</label>
+          <label class="field"><span>Duración (minutos)</span><input type="number" min="15" max="480" formControlName="duracionMin" (input)="clearFieldError('duracionMin')">@if (fieldErrors['duracionMin']) { <small class="error">{{ fieldErrors['duracionMin'] }}</small> }</label>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="button button-quiet" (click)="cancelar()">Cancelar</button>
+          <button class="button button-primary">{{ editingRoute ? 'Guardar cambios' : 'Registrar servicio' }}</button>
+        </div>
+      </form>
+    </section>
+  }
+} @else {
+  <div class="page-head">
+    <div><span class="eyebrow">CATÁLOGO</span><h1>Servicios</h1><p class="muted">Administra los servicios del taller.</p></div>
+    @if (auth.hasPermission('SERVICIO_ESCRIBIR')) { <button class="button button-primary" (click)="irANuevo()">＋ Nuevo servicio</button> }
+  </div>
+
+  @if (error) { <div class="alert">{{ error }}</div> }
+  @if (success) { <div class="alert success">{{ success }}</div> }
+
+  <section class="panel">
+    <div class="panel-head">
+      <div><b>Listado</b><small class="muted" style="display:block;margin-top:5px">Servicios registrados en AutoAndes</small></div>
+      <input placeholder="Buscar por código o nombre" [(ngModel)]="search" [ngModelOptions]="{standalone:true}">
+    </div>
+
+    @if (loading) { <div class="empty">Cargando servicios…</div> }
+    @else if (filtered.length === 0) { <div class="empty">No hay servicios para mostrar.</div> }
+    @else {
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Código</th><th>Servicio</th><th>Precio</th><th>Duración</th><th>Estado</th><th *ngIf="auth.hasPermission('SERVICIO_ESCRIBIR')">Acciones</th></tr></thead>
+          <tbody>
+            @for (servicio of filtered; track servicio.id) {
+              <tr>
+                <td><b>{{ servicio.codigo }}</b></td>
+                <td>{{ servicio.nombre }}</td>
+                <td>S/ {{ servicio.precio | number:'1.2-2' }}</td>
+                <td>{{ servicio.duracionMin }} min</td>
+                <td><span class="badge" [class.off]="!servicio.activo">{{ servicio.activo ? 'Activo' : 'Inactivo' }}</span></td>
+                <td *ngIf="auth.hasPermission('SERVICIO_ESCRIBIR')">
+                  <div class="actions">
+                    <button class="button button-quiet" (click)="editar(servicio)">Editar</button>
+                    <button class="button button-danger" (click)="cambiar(servicio)">{{ servicio.activo ? 'Dar de baja' : 'Activar' }}</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+}
