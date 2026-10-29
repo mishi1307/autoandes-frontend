@@ -1,0 +1,5 @@
+import { Component, inject } from '@angular/core'; import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms'; import { ActivatedRoute, Router } from '@angular/router'; import { AuthService } from '../../core/auth/auth.service'; import { ApiError } from '../../core/models/api.models';
+@Component({standalone:true,imports:[ReactiveFormsModule],templateUrl:'./login.page.html',styleUrl:'./login.page.scss'})
+export class LoginPage { private fb=inject(FormBuilder); private route=inject(ActivatedRoute); private router=inject(Router); readonly auth=inject(AuthService); readonly form=this.fb.nonNullable.group({username:['',Validators.required],password:['',Validators.required]}); loading=false; error='';
+ submit(){if(this.form.invalid){this.form.markAllAsTouched();return;}this.loading=true;this.error='';this.auth.login(this.form.getRawValue()).subscribe({next:()=>{const target=this.route.snapshot.queryParamMap.get('returnUrl')||'/inicio';void this.router.navigateByUrl(target.startsWith('/')&&!target.startsWith('//')?target:'/inicio');},error:(e:ApiError)=>{this.error=e.mensaje||'No se pudo iniciar sesión.';this.loading=false;}});}
+}
