@@ -1,5 +1,83 @@
-<div class="page-head"><div><span class="eyebrow">FLOTA</span><h1>Vehículos</h1><p class="muted">Consulta y administra vehículos de clientes.</p></div>@if(auth.hasPermission('VEHICULO_ESCRIBIR')){<button class="button button-primary" (click)="nuevo()">＋ Nuevo vehículo</button>}</div>@if(error){<div class="alert">{{error}}</div>}@if(success){<div class="alert success">{{success}}</div>}
-<section class="panel"><div class="panel-head"><b>Listado de vehículos</b><label class="toolbar">Cliente <select [(ngModel)]="clienteFilter" (ngModelChange)="load()"><option value="">Todos</option>@for(c of clientes;track c.id){<option [value]="c.id">{{c.nombres}}</option>}</select></label></div>
-<div class="panel-body" *ngIf="showForm"><form class="inline-form" [formGroup]="form" (ngSubmit)="guardar()"><h3>{{editing?'Editar vehículo':'Nuevo vehículo'}}</h3><div class="grid"><label class="field"><span>Placa</span><input formControlName="placa" placeholder="ABC-123"><small class="error" *ngIf="form.controls.placa.touched&&form.controls.placa.invalid">Formato requerido: ABC-123.</small></label><label class="field"><span>Cliente</span><select formControlName="clienteId"><option [ngValue]="0" disabled>Selecciona un cliente</option>@for(c of clientes;track c.id){<option [ngValue]="c.id">{{c.nombres}} · {{c.documento}}</option>}</select></label><label class="field"><span>Marca</span><input formControlName="marca"></label><label class="field"><span>Modelo</span><input formControlName="modelo"></label><label class="field"><span>Año</span><input type="number" formControlName="anio" min="1990" max="2027"></label></div><div class="form-actions"><button type="button" class="button button-quiet" (click)="cancelar()">Cancelar</button><button class="button button-primary">Guardar</button></div></form></div>
-@if(loading){<div class="empty">Cargando vehículos…</div>}@else if(!items.length){<div class="empty">No hay vehículos para mostrar.</div>}@else{<div class="table-wrap"><table><thead><tr><th>Placa</th><th>Marca</th><th>Modelo</th><th>Año</th><th>Cliente</th><th *ngIf="auth.hasPermission('VEHICULO_ESCRIBIR')">Acciones</th></tr></thead><tbody>@for(v of items;track v.id){<tr><td><b>{{v.placa}}</b></td><td>{{v.marca}}</td><td>{{v.modelo}}</td><td>{{v.anio}}</td><td>{{v.clienteNombre}}</td><td *ngIf="auth.hasPermission('VEHICULO_ESCRIBIR')"><div class="actions"><button class="button button-quiet" (click)="editar(v)">Editar</button><button class="button button-danger" (click)="eliminar(v)">Eliminar</button></div></td></tr>}</tbody></table></div>}
-</section>
+@if (formRoute) {
+  <div class="page-head">
+    <div>
+      <span class="eyebrow">FLOTA</span>
+      <h1>{{ editingRoute ? 'Editar vehículo' : 'Nuevo vehículo' }}</h1>
+      <p class="muted">{{ editingRoute ? 'Actualiza los datos del vehículo seleccionado.' : 'Registra un vehículo de un cliente.' }}</p>
+    </div>
+  </div>
+
+  @if (error) { <div class="alert">{{ error }}</div> }
+  @if (loading) { <div class="panel empty">Cargando vehículo…</div> }
+  @else if (!editingRoute || editing) {
+    <section class="panel panel-body">
+      <form class="inline-form" [formGroup]="form" (ngSubmit)="guardar()">
+        <div class="grid">
+          <label class="field">
+            <span>Placa</span>
+            <input formControlName="placa" placeholder="ABC-123" (input)="clearFieldError('placa')">
+            @if (form.controls.placa.touched && form.controls.placa.invalid) { <small class="error">Formato requerido: ABC-123.</small> }
+            @if (fieldErrors['placa']) { <small class="error">{{ fieldErrors['placa'] }}</small> }
+          </label>
+          <label class="field">
+            <span>Cliente</span>
+            <select formControlName="clienteId" (change)="clearFieldError('clienteId')">
+              <option [ngValue]="0" disabled>Selecciona un cliente</option>
+              @for (cliente of clientes; track cliente.id) { <option [ngValue]="cliente.id">{{ cliente.nombres }} · {{ cliente.documento }}</option> }
+            </select>
+            @if (fieldErrors['clienteId']) { <small class="error">{{ fieldErrors['clienteId'] }}</small> }
+          </label>
+          <label class="field"><span>Marca</span><input formControlName="marca" (input)="clearFieldError('marca')">@if (fieldErrors['marca']) { <small class="error">{{ fieldErrors['marca'] }}</small> }</label>
+          <label class="field"><span>Modelo</span><input formControlName="modelo" (input)="clearFieldError('modelo')">@if (fieldErrors['modelo']) { <small class="error">{{ fieldErrors['modelo'] }}</small> }</label>
+          <label class="field"><span>Año</span><input type="number" formControlName="anio" min="1990" max="2027" (input)="clearFieldError('anio')">@if (fieldErrors['anio']) { <small class="error">{{ fieldErrors['anio'] }}</small> }</label>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="button button-quiet" (click)="cancelar()">Cancelar</button>
+          <button class="button button-primary">{{ editingRoute ? 'Guardar cambios' : 'Registrar vehículo' }}</button>
+        </div>
+      </form>
+    </section>
+  }
+} @else {
+  <div class="page-head">
+    <div><span class="eyebrow">FLOTA</span><h1>Vehículos</h1><p class="muted">Consulta y administra vehículos de clientes.</p></div>
+    @if (auth.hasPermission('VEHICULO_ESCRIBIR')) { <button class="button button-primary" (click)="irANuevo()">＋ Nuevo vehículo</button> }
+  </div>
+
+  @if (error) { <div class="alert">{{ error }}</div> }
+  @if (success) { <div class="alert success">{{ success }}</div> }
+
+  <section class="panel">
+    <div class="panel-head">
+      <b>Listado de vehículos</b>
+      <label class="toolbar">Cliente <select [(ngModel)]="clienteFilter" (ngModelChange)="load()"><option value="">Todos</option>@for (cliente of clientes; track cliente.id) { <option [value]="cliente.id">{{ cliente.nombres }}</option> }</select></label>
+    </div>
+
+    @if (loading) { <div class="empty">Cargando vehículos…</div> }
+    @else if (!items.length) { <div class="empty">No hay vehículos para mostrar.</div> }
+    @else {
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Placa</th><th>Marca</th><th>Modelo</th><th>Año</th><th>Cliente</th><th *ngIf="auth.hasPermission('VEHICULO_ESCRIBIR')">Acciones</th></tr></thead>
+          <tbody>
+            @for (vehiculo of items; track vehiculo.id) {
+              <tr>
+                <td><b>{{ vehiculo.placa }}</b></td>
+                <td>{{ vehiculo.marca }}</td>
+                <td>{{ vehiculo.modelo }}</td>
+                <td>{{ vehiculo.anio }}</td>
+                <td>{{ vehiculo.clienteNombre }}</td>
+                <td *ngIf="auth.hasPermission('VEHICULO_ESCRIBIR')">
+                  <div class="actions">
+                    <button class="button button-quiet" (click)="editar(vehiculo)">Editar</button>
+                    <button class="button button-danger" (click)="eliminar(vehiculo)">Eliminar</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+}
