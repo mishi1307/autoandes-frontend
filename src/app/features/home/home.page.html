@@ -1,0 +1,50 @@
+<section class="home-hero">
+  <div>
+    <h1>Bienvenido a AutoAndes</h1>
+    <p>Administra los servicios, vehículos y órdenes del taller desde un solo lugar.</p>
+  </div>
+</section>
+
+<div *ngIf="error" class="alert">{{ error }}</div>
+
+<section class="dashboard-section">
+  <div class="section-heading">
+    <div>
+      <span class="eyebrow">MÓDULOS</span>
+      <h2>Acceso rápido</h2>
+    </div>
+    <span *ngIf="loading" class="muted">Actualizando totales…</span>
+  </div>
+
+  <div class="tiles">
+    <a *ngIf="auth.hasPermission('SERVICIO_LEER')" class="module-card panel module-main" routerLink="/servicios">
+      <span class="module-icon">⚙</span>
+      <span class="module-copy"><b>Servicios</b><small>Catálogo y precios del taller</small></span>
+      <strong class="module-count">{{ loading ? '—' : counts['servicios'].count }}</strong>
+    </a>
+
+    <a *ngIf="auth.hasPermission('VEHICULO_LEER')" class="module-card panel module-main" routerLink="/vehiculos">
+      <span class="module-icon">▣</span>
+      <span class="module-copy"><b>Vehículos</b><small>Flota y datos de clientes</small></span>
+      <strong class="module-count">{{ loading ? '—' : counts['vehiculos'].count }}</strong>
+    </a>
+
+    <a *ngIf="auth.hasPermission('VEHICULO_LEER')" class="module-card panel module-main" routerLink="/clientes">
+      <span class="module-icon">♙</span>
+      <span class="module-copy"><b>Clientes</b><small>Directorio de clientes registrados</small></span>
+      <strong class="module-count">{{ loading ? '—' : counts['clientes'].count }}</strong>
+    </a>
+
+    <a *ngIf="auth.hasPermission('ORDEN_LEER')" class="module-card panel module-main" routerLink="/ordenes">
+      <span class="module-icon">▤</span>
+      <span class="module-copy"><b>Órdenes</b><small>Historial de servicios realizados</small></span>
+      <strong class="module-count">{{ loading ? '—' : counts['ordenes'].count }}</strong>
+    </a>
+
+    <a *ngIf="auth.hasPermission('REPORTE_VER')" class="module-card panel module-main" routerLink="/reportes">
+      <span class="module-icon">▥</span>
+      <span class="module-copy"><b>Reportes</b><small>Ingresos agrupados por servicio</small></span>
+      <strong class="module-arrow">→</strong>
+    </a>
+  </div>
+</section>
